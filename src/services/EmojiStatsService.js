@@ -11,6 +11,7 @@ class EmojiStatsService {
   async recordEmojiUsage(userId, guildId, emojis) {
     try {
       console.log(`🔄 EmojiStatsService.recordEmojiUsage called with ${emojis.length} emojis`);
+      console.log(`🔄 Call stack:`, new Error().stack.split('\n')[1]);
       const results = [];
 
       // Group emojis by name to count occurrences
@@ -28,7 +29,7 @@ class EmojiStatsService {
       
       console.log(`💾 Grouped emojis:`, Object.keys(emojiCounts).map(key => `${emojiCounts[key].emoji.name}:${emojiCounts[key].count}`));
 
-      // Record each unique emoji once with the correct count
+      // Record each unique emoji once with the correct count  
       for (const [key, data] of Object.entries(emojiCounts)) {
         const emojiData = {
           id: data.emoji.id,
@@ -41,8 +42,9 @@ class EmojiStatsService {
         results.push(result);
       }
 
-      // Clear cache to force refresh
+      // Clear cache to force refresh - but there might be a timing issue
       this.clearCache();
+      console.log(`🗑️ Cache cleared after recording emojis`);
 
       return results;
     } catch (error) {

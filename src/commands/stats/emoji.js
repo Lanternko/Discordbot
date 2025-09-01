@@ -19,9 +19,10 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      await interaction.deferReply();
-      
       console.log(`🔍 Processing emoji command for guild ${interaction.guild.id}`);
+      
+      // 立即回應，不使用 defer
+      // await interaction.deferReply();
       const limit = interaction.options.getInteger('limit') || 10;
       const guildId = interaction.guild.id;
 
@@ -65,7 +66,7 @@ module.exports = {
       embed.setDescription(statsText);
       embed.setFooter({ text: `顯示前 ${Math.min(stats.length, limit)} 個貼圖` });
 
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.reply({ embeds: [embed] });
 
     } catch (error) {
       console.error('❌ Error executing emoji command:', error);
@@ -73,7 +74,11 @@ module.exports = {
       const errorEmbed = Formatters.createErrorEmbed(
         error.message || '無法獲取貼圖統計資料，請稍後再試'
       );
-      await interaction.editReply({ embeds: [errorEmbed] });
+      try {
+        await interaction.reply({ embeds: [errorEmbed] });
+      } catch (replyError) {
+        console.error('❌ Failed to send error reply:', replyError);
+      }
     }
   }
 };

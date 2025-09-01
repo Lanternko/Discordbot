@@ -23,42 +23,43 @@ class EmojiUsage {
       const count = emojiData.count || 1;
       console.log(`📝 Recording ${emojiData.name} with count ${count} for user ${userId}`);
       
-      // Check if this emoji usage already exists
-      const existing = await database.get(
-        `SELECT * FROM emoji_usage 
-         WHERE user_id = ? AND guild_id = ? AND emoji_name = ?`,
-        [userId, guildId, emojiData.name]
+      // Use INSERT OR IGNORE + UPDATE approach to handle race conditions
+      // First, try to insert a new record
+      const insertResult = await database.run(
+        `INSERT OR IGNORE INTO emoji_usage 
+         (user_id, guild_id, emoji_id, emoji_name, emoji_type, usage_count, first_used, last_used) 
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          userId,
+          guildId,
+          emojiData.id || null,
+          emojiData.name,
+          emojiData.type || 'unicode',
+          count
+        ]
       );
 
-      if (existing) {
-        console.log(`✏️ Updating existing ${emojiData.name}: ${existing.usage_count} + ${count}`);
-        // Update existing record with the count
+      if (insertResult.changes > 0) {
+        console.log(`➕ Created new ${emojiData.name} record with count ${count}`);
+        return await this.findById(insertResult.id);
+      } else {
+        console.log(`✏️ Record exists, updating ${emojiData.name} by adding ${count}`);
+        // Record already exists, update it
         await database.run(
           `UPDATE emoji_usage 
            SET usage_count = usage_count + ?, last_used = CURRENT_TIMESTAMP 
-           WHERE id = ?`,
-          [count, existing.id]
+           WHERE user_id = ? AND guild_id = ? AND emoji_name = ?`,
+          [count, userId, guildId, emojiData.name]
         );
         
-        return await this.findById(existing.id);
-      } else {
-        console.log(`➕ Creating new ${emojiData.name} with count ${count}`);        
-        // Create new record with the count
-        const result = await database.run(
-          `INSERT INTO emoji_usage 
-           (user_id, guild_id, emoji_id, emoji_name, emoji_type, usage_count) 
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            userId,
-            guildId,
-            emojiData.id || null,
-            emojiData.name,
-            emojiData.type || 'unicode',
-            count
-          ]
+        // Get the updated record
+        const updated = await database.get(
+          `SELECT * FROM emoji_usage 
+           WHERE user_id = ? AND guild_id = ? AND emoji_name = ?`,
+          [userId, guildId, emojiData.name]
         );
-
-        return await this.findById(result.id);
+        
+        return updated ? new EmojiUsage(updated) : null;
       }
     } catch (error) {
       console.error('Error recording emoji usage with count:', error);

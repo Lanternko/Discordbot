@@ -11,9 +11,23 @@ const messageAnalyzer = new MessageAnalyzer();
 const pointsService = new PointsService();
 const emojiStatsService = new EmojiStatsService();
 
+// 解決方案：防止重複處理同一訊息
+const processedMessages = new Set();
+
 module.exports = {
   name: Events.MessageCreate,
   async execute(message) {
+    // 解決方案：檢查訊息是否已被處理
+    console.log(`🔍 Processing message ${message.id} - Already processed: ${processedMessages.has(message.id)}`);
+    if (processedMessages.has(message.id)) {
+      console.log(`⏭️ Message ${message.id} already processed, skipping`);
+      return;
+    }
+    processedMessages.add(message.id);
+    console.log(`✅ Message ${message.id} added to processed set`);
+    // 60秒後清除記錄，防止記憶體洩漏
+    setTimeout(() => processedMessages.delete(message.id), 60000);
+    
     // Ignore bot messages and system messages
     if (message.author.bot || message.system) {
       return;
@@ -81,8 +95,10 @@ module.exports = {
 
       // Record emoji usage if enabled
       if (config.features.enableEmojiStats && analysis.hasEmojis) {
-        console.log(`🔢 Recording ${analysis.emojis.length} emojis for user ${username}`);
+        console.log(`🔢 About to record ${analysis.emojis.length} emojis for user ${username} from message ${message.id}`);
+        console.log(`🔢 Emoji details:`, analysis.emojis.map(e => `${e.name}(${e.type})`));
         await emojiStatsService.recordEmojiUsage(userId, guildId, analysis.emojis);
+        console.log(`✅ Finished recording emojis for message ${message.id}`);
       }
 
       // Store message record if content analysis is enabled
