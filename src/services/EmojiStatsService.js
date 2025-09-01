@@ -279,4 +279,5 @@ class EmojiStatsService {
   }
 }
 
-module.exports = EmojiStatsService;
+// Export a singleton instance instead of the class
+module.exports = new EmojiStatsService();

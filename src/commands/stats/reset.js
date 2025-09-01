@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { COLORS } = require('../../utils/constants');
 const database = require('../../config/database');
+const emojiStatsService = require('../../services/EmojiStatsService');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -88,6 +89,10 @@ module.exports = {
         default:
           throw new Error('無效的重置類型');
       }
+
+      // Clear emoji stats cache to ensure consistency
+      emojiStatsService.clearCache();
+      console.log('🗑️ Emoji stats cache cleared due to reset.');
 
       const successEmbed = new EmbedBuilder()
         .setTitle('✅ 重置完成')

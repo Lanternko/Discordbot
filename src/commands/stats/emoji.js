@@ -1,9 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const EmojiStatsService = require('../../services/EmojiStatsService');
+const emojiStatsService = require('../../services/EmojiStatsService');
 const Formatters = require('../../utils/formatters');
 const { COLORS } = require('../../utils/constants');
-
-const emojiStatsService = new EmojiStatsService();
 
 module.exports = {
   data: new SlashCommandBuilder()

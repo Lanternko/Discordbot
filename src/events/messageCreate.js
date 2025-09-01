@@ -3,13 +3,12 @@ const User = require('../models/User');
 const Message = require('../models/Message');
 const MessageAnalyzer = require('../services/MessageAnalyzer');
 const PointsService = require('../services/PointsService');
-const EmojiStatsService = require('../services/EmojiStatsService');
+const emojiStatsService = require('../services/EmojiStatsService');
 const Formatters = require('../utils/formatters');
 const config = require('../config/bot');
 
 const messageAnalyzer = new MessageAnalyzer();
 const pointsService = new PointsService();
-const emojiStatsService = new EmojiStatsService();
 
 // 解決方案：防止重複處理同一訊息
 const processedMessages = new Set();
